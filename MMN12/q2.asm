@@ -39,10 +39,10 @@ main:
 calcSum:
 	move $v0, $zero # reset $v0 to zero
 	move $t1, $a0 #load the given first node address to the $t1 as holder for current node location
-whileNotZero:	lw $t0, ($t1) #load the value, the first word by the address of node(stored in $a0) start of the while loop
+whileNotZeroA:	lw $t0, ($t1) #load the value, the first word by the address of node(stored in $a0) start of the while loop
 	add $v0, $v0, $t0 # add it to the current sum
 	lw $t1, 4($t1) # load the address of next node
-	bne $t1, $zero, whileNotZero # check if reached to the final node(the next node address is zero) and branch again to the start of the while loop if not
+	bne $t1, $zero, whileNotZeroA # check if reached to the final node(the next node address is zero) and branch again to the start of the while loop if not
 	jr $ra
 	
 # this function will iterate over the given nodes, start from $a0(address of node1)
@@ -51,14 +51,14 @@ whileNotZero:	lw $t0, ($t1) #load the value, the first word by the address of no
 calcSumDivideBy4: 
 	move $v0, $zero # reset $v0 to zero
 	move $t2, $a0 #load the given first node address to the $t1 as holder for current node location
-whileNotZeroDivideBy4:# start of the while loop
+whileNotZeroB:# start of the while loop
 	lw $t0, ($t2) #load the value, the first word by the address of node(stored in $a0)
 	and $t1, $t0, 0x8003 # find if it positive and divide by 4 0x8003=1000000000000011 and save the rsult to $t1
 	bnez $t1, nextNode # if $t1 its not 0 then the node's value is either negative or not divide by four then branch to next node
 	add $v0, $v0, $t0 # add it to the current sum
 nextNode:	
 	lw $t2, 4($t2) # load the address of next node
-	bne $t2, $zero, whileNotZeroDivideBy4 # check if reached to the final node(the next node address is zero) and branch again to the start of the while loop if not
+	bne $t2, $zero, whileNotZeroB # check if reached to the final node(the next node address is zero) and branch again to the start of the while loop if not
 	jr $ra
 
 	
@@ -66,19 +66,27 @@ nextNode:
 # it will print eaxh digit in base 4, every two bits from MSB
 # it will do it by shift the number i*2 times to the right and then print the digit for each set of two bits
 printValuesInBase4:
-	addi $sp, $sp, -4
-	sw $ra ,($sp)
+	addi $sp, $sp, -8
+	sw $ra ,4($sp)
 	move $t0, $a0 #load the given first node address to the $t1 as holder for current node location
-whileNotZeroBase4:# start of the while loop
+whileNotZeroC:# start of the while loop
 	lw $t1, ($t0) #load the value, the first word by the address of node(stored in $a0)
-	#store the value in a0
+	move $t1, $a0 # move the value of number to print as an paramter to printValueInBase4
+	sw $t0, ($sp) # backup t0 because we want its value in the next itertations
+
 	# jump to function that divid it to set of two bits and from there call print value
 	# change the printsum to print and println
+	lw $t0, ($sp)
 	lw $t0, 4($t0) # load the address of next node
-	bne $t0, $zero, whileNotZeroBase4 # check if reached to the final node(the next node address is zero) and branch again to the start of the while loop if not
-	lw $ra ,($sp)
-	addi $sp, $sp, 4
+	bne $t0, $zero, whileNotZeroC # check if reached to the final node(the next node address is zero) and branch again to the start of the while loop if not
+	lw $ra ,4($sp)
+	addi $sp, $sp, 8
 	j $ra
+	
+printValueInBase4:
+	move $a0, $t0
+	move $s0, $zero
+
 # this function will print the given value in $a0	
 printSum:
 	# print number in $a0
