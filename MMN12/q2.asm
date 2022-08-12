@@ -22,15 +22,17 @@ num5: .word 1972, num4
 .text
 .global main
 main:
-	la $a0, num1
-	jal calcSum
-	jal printSum
+	#la $a0, num1
+	#jal calcSum
+	#jal println
 
+	#la $a0, num1
+	#jal calcSumDivideBy4
+	#jal println
+	
 	la $a0, num1
-	jal calcSumDivideBy4
-	jal printSum
-	
-	
+	jal printValuesInBase4
+		
 	j Exit
 	
 	
@@ -71,24 +73,41 @@ printValuesInBase4:
 	move $t0, $a0 #load the given first node address to the $t1 as holder for current node location
 whileNotZeroC:# start of the while loop
 	lw $t1, ($t0) #load the value, the first word by the address of node(stored in $a0)
-	move $t1, $a0 # move the value of number to print as an paramter to printValueInBase4
 	sw $t0, ($sp) # backup t0 because we want its value in the next itertations
-
-	# jump to function that divid it to set of two bits and from there call print value
-	# change the printsum to print and println
+	move $a0, $t1 # move the value of number to print as an paramter to printValueInBase4
+	jal printValueInBase4
+	
 	lw $t0, ($sp)
 	lw $t0, 4($t0) # load the address of next node
 	bne $t0, $zero, whileNotZeroC # check if reached to the final node(the next node address is zero) and branch again to the start of the while loop if not
 	lw $ra ,4($sp)
 	addi $sp, $sp, 8
-	j $ra
+	jr $ra
 	
 printValueInBase4:
-	move $a0, $t0
-	move $s0, $zero
+	addi $sp, $sp, -4
+	sw $ra ,($sp)
+	move $t0, $a0
+	move $s0, $zero # reset $s0 to zero
+	addi $s0, ,$s0, 7 #num of oteration
+loop:	bgtz $t0, notZero
+	not $t0, $t0
+	addi, $t0, $t0, 1
+notZero:
+	srlv $t2, $t0, $s0
+	andi $t2, 3 # and with 0000000000000011 to get the current two iterated bits
+	subi $s0, $s0, 1
+	beqz $t2, notZero
+	move $a0, $t2
+	jal print
+	
+	bnez $s0, loop
 
-# this function will print the given value in $a0	
-printSum:
+	lw $ra ,($sp)
+	addi $sp, $sp, 4
+	jr $ra
+# this function will print the given value in $a0 with a \n after it
+println:
 	# print number in $a0
 	move $a0, $v0
 	li $v0, 1
@@ -99,6 +118,14 @@ printSum:
 	syscall
 	jr $ra
 	
+# this function will print the given value in $a0 without a \n after it
+print:
+	# print number in $a0
+	move $a0, $v0
+	li $v0, 1
+	syscall
+	jr $ra
+
 Exit:
 	li $v0, 10
 	syscall
