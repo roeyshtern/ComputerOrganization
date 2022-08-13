@@ -22,13 +22,15 @@ num5: .word 1972, num4
 .text
 .global main
 main:
-	#la $a0, num1
-	#jal calcSum
-	#jal println
+	la $a0, num1
+	jal calcSum
+	move $a0, $v0
+	jal printNumln
 
-	#la $a0, num1
-	#jal calcSumDivideBy4
-	#jal println
+	la $a0, num1
+	jal calcSumDivideBy4
+	move $a0, $v0
+	jal printNumln
 	
 	la $a0, num1
 	jal printValuesInBase4
@@ -68,15 +70,15 @@ nextNode:
 # it will print eaxh digit in base 4, every two bits from MSB
 # it will do it by shift the number i*2 times to the right and then print the digit for each set of two bits
 printValuesInBase4:
-	addi $sp, $sp, -8
-	sw $ra ,4($sp)
+	addi $sp, $sp, -8 #save space on sp
+	sw $ra ,4($sp) #save ra on stack
 	move $t0, $a0 #load the given first node address to the $t1 as holder for current node location
 whileNotZeroC:# start of the while loop
-	lw $t1, ($t0) #load the value, the first word by the address of node(stored in $a0)
+	lw $t1, ($t0) #load the value of current node, the first word by the address of node(stored in $a0)
 	sw $t0, ($sp) # backup t0 because we want its value in the next itertations
 	move $a0, $t1 # move the value of number to print as an paramter to printValueInBase4
 	jal printValueInBase4
-	
+
 	lw $t0, ($sp)
 	lw $t0, 4($t0) # load the address of next node
 	bne $t0, $zero, whileNotZeroC # check if reached to the final node(the next node address is zero) and branch again to the start of the while loop if not
@@ -85,31 +87,36 @@ whileNotZeroC:# start of the while loop
 	jr $ra
 	
 printValueInBase4:
-	addi $sp, $sp, -4
-	sw $ra ,($sp)
-	move $t0, $a0
+	addi $sp, $sp, -4 #save space on sp
+	sw $ra ,($sp) #save ra on stack
+	move $t0, $a0 # set $t0 to current value
+	move $t3, $zero # reset $t3 to zero
 	move $s0, $zero # reset $s0 to zero
-	addi $s0, ,$s0, 7 #num of oteration
-loop:	bgtz $t0, notZero
-	not $t0, $t0
+	addi $s0, ,$s0, 14 #num of iteration
+loop:	bgtz $t0, positive
+	li $a0, '-'
+	jal printChar
+	# do abs(value) - not(value), new_value plus 1
+	not $t0, $t0 
 	addi, $t0, $t0, 1
-notZero:
-	srlv $t2, $t0, $s0
-	andi $t2, 3 # and with 0000000000000011 to get the current two iterated bits
-	subi $s0, $s0, 1
-	beqz $t2, notZero
-	move $a0, $t2
-	jal print
+positive:
+	srlv $t2, $t0, $s0 # shift current value to current number of shifts to $t2
+	andi $t2, 3 # and with 0000000000000011 to get only current two iterated bits
+	subi $s0, $s0, 2 # reduce the number of shift by 2 for next digit in base4
+	add $t3, $t3, $t2 # add the current value to the flag of current printed valus
+	beqz $t3, positive # if flag is starting zero jump to next iteration
+	move $a0, $t2 #move current base4 value to $a0 and print it
+	jal printNum
 	
-	bnez $s0, loop
-
+	bgez $s0, loop # if not finished iteration jump to start of loop
+	
+	li $a0, '\n'
+	jal printChar
 	lw $ra ,($sp)
 	addi $sp, $sp, 4
 	jr $ra
 # this function will print the given value in $a0 with a \n after it
-println:
-	# print number in $a0
-	move $a0, $v0
+printNumln:
 	li $v0, 1
 	syscall
 	# print newline
@@ -119,10 +126,14 @@ println:
 	jr $ra
 	
 # this function will print the given value in $a0 without a \n after it
-print:
-	# print number in $a0
-	move $a0, $v0
+printNum:
 	li $v0, 1
+	syscall
+	jr $ra
+
+# this function will print the given value in $a0 without a \n after it
+printChar:
+	li $v0, 11
 	syscall
 	jr $ra
 
