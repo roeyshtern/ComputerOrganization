@@ -70,22 +70,33 @@ nextNode:
 # it will print eaxh digit in base 4, every two bits from MSB
 # it will do it by shift the number i*2 times to the right and then print the digit for each set of two bits
 printValuesInBase4:
-	addi $sp, $sp, -8 #save space on sp
-	sw $ra ,4($sp) #save ra on stack
+	addi $sp, $sp, -8 
+	sw $ra ,4($sp) 
 	move $t0, $a0 #load the given first node address to the $t1 as holder for current node location
 whileNotZeroC:# start of the while loop
 	lw $t1, ($t0) #load the value of current node, the first word by the address of node(stored in $a0)
 	sw $t0, ($sp) # backup t0 because we want its value in the next itertations
 	move $a0, $t1 # move the value of number to print as an paramter to printValueInBase4
 	jal printValueInBase4
-
-	lw $t0, ($sp)
+	
+	lw $t0, ($sp) # load back $t0 before jumbing to function
+	
 	lw $t0, 4($t0) # load the address of next node
-	bne $t0, $zero, whileNotZeroC # check if reached to the final node(the next node address is zero) and branch again to the start of the while loop if not
+	
+	beqz $t0, next # if the next number is null then dont print ','
+	li $a0, ','
+	jal printChar
+	
+
+next:	bne $t0, $zero, whileNotZeroC # check if reached to the final node(the next node address is zero) and branch again to the start of the while loop if not
 	lw $ra ,4($sp)
 	addi $sp, $sp, 8
 	jr $ra
 	
+# This function will print given number in $a0 at base 4
+# the function will check if the number is negative than print '-' and make the number positive
+# print the number by iterating on two bits in the binary value of the original number
+# will shift the number 14, 12, 10..0 and print the two current  bits with function printNum
 printValueInBase4:
 	addi $sp, $sp, -4 #save space on sp
 	sw $ra ,($sp) #save ra on stack
@@ -93,7 +104,8 @@ printValueInBase4:
 	move $t3, $zero # reset $t3 to zero
 	move $s0, $zero # reset $s0 to zero
 	addi $s0, ,$s0, 14 #num of iteration
-loop:	bgtz $t0, positive
+loop:	bgtz $t0, positive # if positive vbranch right to handlke positive numbner
+	# if negative, print '-' and do abs(value) and continue the flow of the function
 	li $a0, '-'
 	jal printChar
 	# do abs(value) - not(value), new_value plus 1
@@ -110,12 +122,11 @@ positive:
 	
 	bgez $s0, loop # if not finished iteration jump to start of loop
 	
-	li $a0, '\n'
-	jal printChar
 	lw $ra ,($sp)
 	addi $sp, $sp, 4
 	jr $ra
-# this function will print the given value in $a0 with a \n after it
+	
+# this function will print the given number in $a0 with a \n after it
 printNumln:
 	li $v0, 1
 	syscall
@@ -125,13 +136,13 @@ printNumln:
 	syscall
 	jr $ra
 	
-# this function will print the given value in $a0 without a \n after it
+# this function will print the given number in $a0 without a \n after it
 printNum:
 	li $v0, 1
 	syscall
 	jr $ra
 
-# this function will print the given value in $a0 without a \n after it
+# this function will print the given char in $a0 without a \n after it
 printChar:
 	li $v0, 11
 	syscall
