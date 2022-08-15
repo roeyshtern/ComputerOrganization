@@ -43,7 +43,8 @@ main:
 calcSum:
 	move $v0, $zero # reset $v0 to zero
 	move $t1, $a0 #load the given first node address to the $t1 as holder for current node location
-whileNotZeroA:	lw $t0, ($t1) #load the value, the first word by the address of node(stored in $a0) start of the while loop
+	whileNotZeroA:	
+	lw $t0, ($t1) #load the value, the first word by the address of node(stored in $a0) start of the while loop
 	add $v0, $v0, $t0 # add it to the current sum
 	lw $t1, 4($t1) # load the address of next node
 	bne $t1, $zero, whileNotZeroA # check if reached to the final node(the next node address is zero) and branch again to the start of the while loop if not
@@ -55,12 +56,12 @@ whileNotZeroA:	lw $t0, ($t1) #load the value, the first word by the address of n
 calcSumDivideBy4: 
 	move $v0, $zero # reset $v0 to zero
 	move $t2, $a0 #load the given first node address to the $t1 as holder for current node location
-whileNotZeroB:# start of the while loop
+	whileNotZeroB:# start of the while loop
 	lw $t0, ($t2) #load the value, the first word by the address of node(stored in $a0)
 	and $t1, $t0, 0x8003 # find if it positive and divide by 4 0x8003=1000000000000011 and save the rsult to $t1
 	bnez $t1, nextNode # if $t1 its not 0 then the node's value is either negative or not divide by four then branch to next node
 	add $v0, $v0, $t0 # add it to the current sum
-nextNode:	
+	nextNode:	
 	lw $t2, 4($t2) # load the address of next node
 	bne $t2, $zero, whileNotZeroB # check if reached to the final node(the next node address is zero) and branch again to the start of the while loop if not
 	jr $ra
@@ -73,7 +74,7 @@ printValuesInBase4:
 	addi $sp, $sp, -8 
 	sw $ra ,4($sp) 
 	move $t0, $a0 #load the given first node address to the $t1 as holder for current node location
-whileNotZeroC:# start of the while loop
+	whileNotZeroC:# start of the while loop
 	lw $t1, ($t0) #load the value of current node, the first word by the address of node(stored in $a0)
 	sw $t0, ($sp) # backup t0 because we want its value in the next itertations
 	move $a0, $t1 # move the value of number to print as an paramter to printValueInBase4
@@ -88,7 +89,7 @@ whileNotZeroC:# start of the while loop
 	jal printChar
 	
 
-next:	bne $t0, $zero, whileNotZeroC # check if reached to the final node(the next node address is zero) and branch again to the start of the while loop if not
+	next:	bne $t0, $zero, whileNotZeroC # check if reached to the final node(the next node address is zero) and branch again to the start of the while loop if not
 	lw $ra ,4($sp)
 	addi $sp, $sp, 8
 	jr $ra
@@ -104,14 +105,14 @@ printValueInBase4:
 	move $t3, $zero # reset $t3 to zero
 	move $s0, $zero # reset $s0 to zero
 	addi $s0, ,$s0, 14 #num of iteration
-loop:	bgtz $t0, positive # if positive vbranch right to handlke positive numbner
+	loop:	bgtz $t0, positive # if positive vbranch right to handlke positive numbner
 	# if negative, print '-' and do abs(value) and continue the flow of the function
 	li $a0, '-'
 	jal printChar
 	# do abs(value) - not(value), new_value plus 1
 	not $t0, $t0 
 	addi, $t0, $t0, 1
-positive:
+	positive:
 	srlv $t2, $t0, $s0 # shift current value to current number of shifts to $t2
 	andi $t2, 3 # and with 0000000000000011 to get only current two iterated bits
 	subi $s0, $s0, 2 # reduce the number of shift by 2 for next digit in base4
